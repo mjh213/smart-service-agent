@@ -1,5 +1,5 @@
 """
-拼多多消息处理类
+电商平台消息处理类
 """
 from bridge.context import  ContextType
 from Message.message import ChatMessage
@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 
 class PDDMsgType(IntEnum):
-    """拼多多消息类型枚举"""
+    """电商平台消息类型枚举"""
     TEXT = 0
     IMAGE = 1
     VIDEO = 14
@@ -19,7 +19,7 @@ class PDDMsgType(IntEnum):
 
 
 class PDDSubType(IntEnum):
-    """拼多多消息子类型枚举"""
+    """电商平台消息子类型枚举"""
     ORDER_INFO = 1
     GOODS_INQUIRY = 0
 
@@ -150,7 +150,7 @@ class MessageTypeHandler:
         }
         return ContextType.TRANSFER,transfer_info
 class PDDChatMessage(ChatMessage):
-    """拼多多消息实现类"""
+    """电商平台消息实现类"""
     
     def __init__(self, msg):
         super().__init__(msg)

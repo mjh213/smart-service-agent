@@ -140,7 +140,7 @@ class LifecycleMixin:
             query = "&".join([f"{k}={v}" for k, v in params.items()])
             full_url = f"{self.base_url}?{query}"
 
-            self.logger.debug(f"正在连接到拼多多WebSocket: {shop_id}-{username}")
+            self.logger.debug(f"正在连接到电商平台WebSocket: {shop_id}-{username}")
 
             async with websockets.connect(
                 full_url,

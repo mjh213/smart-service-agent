@@ -3,7 +3,7 @@ from ..base_request import BaseRequest
 
 class ProductManager(BaseRequest):
     """
-    拼多多商品管理API
+    电商平台商品管理API
     提供商品列表查询和商品详情获取功能
     """
 
@@ -176,7 +176,7 @@ class ProductManager(BaseRequest):
         """
         try:
             result_data = response_data.get('result', {})
-            # 拼多多API商品列表在 onSaleGoods 字段中
+            # 电商平台API商品列表在 onSaleGoods 字段中
             goods_list = result_data.get('onSaleGoods', [])
 
             products = []

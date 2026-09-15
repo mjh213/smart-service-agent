@@ -1,6 +1,6 @@
 """
-拼多多WebSocket客户端
-此模块提供与拼多多商家后台的WebSocket通信功能，用于接收和发送客服消息。
+电商平台WebSocket客户端
+此模块提供与电商平台商家后台的WebSocket通信功能，用于接收和发送客服消息。
 支持多店铺管理、消息队列处理和自动重连机制。
 
 代码已拆分为多个模块：
@@ -44,7 +44,7 @@ from Channel.pinduoduo.core.pdd_utils import (
 
 class PDDChannel(ConnectionMixin, MessageHandlerMixin, LifecycleMixin, StatusMixin, Channel):
     """
-    拼多多WebSocket客户端 - 支持自动重连和心跳检查
+    电商平台WebSocket客户端 - 支持自动重连和心跳检查
 
     使用 Mixin 组合模式，代码已拆分为多个功能模块：
     - ConnectionMixin: 连接管理

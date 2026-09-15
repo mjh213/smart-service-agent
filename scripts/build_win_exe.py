@@ -53,21 +53,21 @@ def main():
         "--distpath", "dist",
         "--workpath", "build",
         "--clean",
-        "scripts/agent_customer.spec",
+        "scripts/smartservice.spec",
     ]
 
     run(cmd)
 
     # 检查结果
-    dist_dir = Path("dist") / "AgentCustomer"
-    dist_exe = dist_dir / "AgentCustomer.exe"
+    dist_dir = Path("dist") / "SmartService"
+    dist_exe = dist_dir / "SmartService.exe"
     if dist_exe.exists():
         size = dist_exe.stat().st_size / (1024 * 1024)
         print(f"\n构建成功: {dist_exe}")
         print(f"文件大小: {size:.1f} MB")
         print(f"输出目录: {dist_dir.absolute()}")
     else:
-        print("构建完成，详见 dist/AgentCustomer/ 目录")
+        print("构建完成，详见 dist/SmartService/ 目录")
 
 if __name__ == "__main__":
     main()

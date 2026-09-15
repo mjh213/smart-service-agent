@@ -45,7 +45,7 @@ class SyncWorker(QThread):
     def __init__(
         self,
         shop_db_id: int,
-        pdd_shop_id: str,
+        platform_shop_id: str,
         user_id: str,
         is_full_sync: bool,
         product_sync: ProductSyncService,
@@ -53,7 +53,7 @@ class SyncWorker(QThread):
     ):
         super().__init__(parent)
         self.shop_db_id = shop_db_id
-        self.pdd_shop_id = pdd_shop_id
+        self.platform_shop_id = platform_shop_id
         self.user_id = user_id
         self.is_full_sync = is_full_sync
         self.product_sync = product_sync
@@ -75,7 +75,7 @@ class SyncWorker(QThread):
 
         result = loop.run_until_complete(
             self.product_sync.sync_shop(
-                shop_id=int(self.pdd_shop_id),
+                shop_id=int(self.platform_shop_id),
                 shop_db_id=self.shop_db_id,
                 user_id=self.user_id,
                 is_full_sync=self.is_full_sync,
@@ -734,7 +734,7 @@ class KnowledgeUI(QWidget):
     def _start_sync(self, shop: Shop, is_full_sync: bool):
         """开始同步"""
         # 获取pdd shop_id和user_id
-        pdd_shop_id = shop.shop_id
+        platform_shop_id = shop.shop_id
         # 从shop.accounts[0]获取user_id，假设一个店铺只有一个账号
         if not shop.accounts:
             self._show_message("error", "店铺没有账号信息")
@@ -751,7 +751,7 @@ class KnowledgeUI(QWidget):
         # 创建工作线程
         self._sync_worker = SyncWorker(
             shop_db_id=shop.id,
-            pdd_shop_id=pdd_shop_id,
+            platform_shop_id=platform_shop_id,
             user_id=user_id,
             is_full_sync=is_full_sync,
             product_sync=self.product_sync,

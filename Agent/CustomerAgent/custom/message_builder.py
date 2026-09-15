@@ -81,7 +81,8 @@ class MessageBuilder:
 
 💡 重要提示：
 - 工具参数必须使用【当前会话信息】中的值！
-- 知识库没答案时，引导用户查看商品详情页～
+- 本次检索到的业务知识是最高优先级，尤其是发货时效、退款期限、退换货条件、价格等具体规则；不得被历史回答或模型常识覆盖。
+- 如果本次知识检索没有明确答案，不得编造具体数字、日期、金额或承诺，应明确说明暂未查到并建议转人工。
 - 工作时间8:00-23:00，其他时间无法转人工哦～
 """
         parts.append(additional_context)
@@ -144,6 +145,33 @@ class MessageBuilder:
             logger.warning(f"动态获取商品列表失败: {e}")
             dependencies["product_list"] = "获取商品列表失败"
 
+    def _inject_knowledge_context(
+        self,
+        query: str,
+        dependencies: Dict[str, Any],
+    ) -> None:
+        """把本次问题命中的业务知识注入提示词，作为回答依据。"""
+        try:
+            from core.di_container import container
+            from database.knowledge_service import KnowledgeService
+
+            shop_id = dependencies.get("shop_id")
+            if not shop_id or not query:
+                dependencies["knowledge_context"] = "本次未执行业务知识检索。"
+                return
+
+            service = container.get(KnowledgeService)
+            result = service.search_knowledge(shop_id=shop_id, query=query, limit=5)
+            formatted = service.format_search_result(result)
+            dependencies["knowledge_context"] = formatted or (
+                "本次业务知识库未命中明确内容。不得自行编造具体政策数字。"
+            )
+        except Exception as e:
+            logger.warning(f"注入业务知识上下文失败: {e}")
+            dependencies["knowledge_context"] = (
+                "本次业务知识检索失败。不得自行编造具体政策数字，必要时建议转人工。"
+            )
+
     def build_messages(
         self,
         query: str,
@@ -169,6 +197,7 @@ class MessageBuilder:
             if dependencies:
                 # 动态获取商品列表并注入到 dependencies
                 self._inject_product_list(dependencies)
+                self._inject_knowledge_context(query, dependencies)
 
                 for key, value in dependencies.items():
                     content = content.replace(f"{{{key}}}", str(value))
@@ -180,6 +209,9 @@ class MessageBuilder:
                 session_info += f"- recipient_uid: {dependencies.get('recipient_uid', '')}（接收消息的用户UID，发送商品卡片时使用）\n"
                 session_info += f"- shop_name: {dependencies.get('shop_name', '')}（店铺名称）\n"
                 session_info += f"- channel_type: {dependencies.get('channel_type', '')}（渠道类型）\n"
+                session_info += "\n【本次问题检索到的业务知识】\n"
+                session_info += str(dependencies.get("knowledge_context", ""))
+                session_info += "\n【业务知识使用规则】如果上面有明确政策，必须以其为准；如果没有明确政策，不得编造具体数字。"
                 session_info += "\n【重要】调用工具时，shop_id、user_id 等参数必须使用上面【当前会话信息】中给出的值！"
                 content += session_info
 

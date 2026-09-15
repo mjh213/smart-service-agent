@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from typing import Any, Dict, List, Optional
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
@@ -39,7 +40,7 @@ logger = get_logger("LocalTestUI")
 class LocalAgentWorker(QThread):
     """在后台线程中运行 Agent，避免阻塞 UI。"""
 
-    reply_ready = pyqtSignal(str)
+    reply_ready = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
     def __init__(self, query: str, account_info: Dict[str, Any], parent=None):
@@ -52,17 +53,17 @@ class LocalAgentWorker(QThread):
         asyncio.set_event_loop(loop)
 
         try:
-            reply = loop.run_until_complete(self._ask_agent())
-            self.reply_ready.emit(reply)
+            result = loop.run_until_complete(self._ask_agent())
+            self.reply_ready.emit(result)
         except Exception as e:
             logger.error(f"本地测试提问失败: {e}")
             self.error_occurred.emit(str(e))
         finally:
             loop.close()
 
-    async def _ask_agent(self) -> str:
+    async def _ask_agent(self) -> Dict[str, Any]:
         agent = CustomerAgent()
-        context = Context.create_pinduoduo_context(
+        context = Context.create_platform_context(
             content=self.query,
             from_uid="local_demo_user",
             nickname="本地演示用户",
@@ -72,10 +73,16 @@ class LocalAgentWorker(QThread):
             user_id=f"local_debug_{self.account_info['user_id']}",
             username=self.account_info["username"],
             shop_name=self.account_info["shop_name"],
-            channel_type=ChannelType.PINDUODUO,
+            channel_type=ChannelType.PLATFORM,
         )
+        started_at = time.perf_counter()
         reply = await agent.async_reply(self.query, context)
-        return getattr(reply, "content", str(reply))
+        elapsed_ms = int((time.perf_counter() - started_at) * 1000)
+        return {
+            "reply": getattr(reply, "content", str(reply)),
+            "elapsed_ms": elapsed_ms,
+            "trace": getattr(agent, "last_trace", {}),
+        }
 
 
 class LocalTestUI(QFrame):
@@ -86,6 +93,8 @@ class LocalTestUI(QFrame):
         self.setObjectName("local-test")
         self.worker: Optional[LocalAgentWorker] = None
         self.account_items: List[Dict[str, Any]] = []
+        self.latest_query = ""
+        self.latest_rag_result: Dict[str, Any] = {}
         self.logger = get_logger("LocalTestUI")
         self.knowledge_service = container.get(KnowledgeService)
 
@@ -204,8 +213,8 @@ class LocalTestUI(QFrame):
 
         self.flow_view = QTextEdit(self)
         self.flow_view.setReadOnly(True)
-        self.flow_view.setMaximumHeight(150)
-        self.flow_view.setPlaceholderText("这里会显示演示说明...")
+        self.flow_view.setMaximumHeight(210)
+        self.flow_view.setPlaceholderText("这里会显示回答分析、工具调用和演示说明...")
         rag_layout.addWidget(self.flow_view)
 
         splitter.addWidget(chat_card)
@@ -386,9 +395,13 @@ class LocalTestUI(QFrame):
             "3. 对比右侧检索结果与左侧最终回复，讲解“先检索，再生成”"
         )
         self.flow_view.setPlainText(
-            "当前演示逻辑\n"
+            "回答分析面板\n"
             "------------------------------\n"
-            "问题输入 -> 本地知识检索 -> 显示命中知识 -> Agent 生成客服回复"
+            "等待提问后展示：\n"
+            "1. RAG 命中数量\n"
+            "2. Agent 工具调用\n"
+            "3. LLM 调用次数与耗时\n"
+            "4. 是否进入兜底策略"
         )
 
     def _search_knowledge(self, query: str, account: Dict[str, Any]) -> Dict[str, Any]:
@@ -466,12 +479,85 @@ class LocalTestUI(QFrame):
             scene = "该问题未命中本地知识，可向他人说明系统存在知识缺失时的兜底策略。"
 
         self.flow_view.setPlainText(
-            "RAG 演示讲解建议\n"
+            "回答分析面板\n"
             "------------------------------\n"
-            f"1. 用户问题：{query}\n"
-            f"2. 检索结论：{scene}\n"
-            "3. 最终说明：左侧是 Agent 回复，右侧是它可利用的知识依据。"
+            f"用户问题：{query}\n"
+            f"检索结论：{scene}\n"
+            "Agent 回复完成后，这里会继续显示工具调用、耗时和兜底状态。"
         )
+
+    def _infer_expected_tools(self, query: str, rag_result: Dict[str, Any]) -> List[str]:
+        """根据问题和检索结果推断可讲解的业务工具，不参与真实回复决策。"""
+        terms = {
+            "transfer_conversation": ("人工", "真人", "客服", "转接", "投诉"),
+            "get_shop_products": ("商品", "推荐", "有哪些", "列表", "价格"),
+            "get_product_knowledge": ("适合", "成分", "规格", "用法", "功效", "敏感肌"),
+            "search_customer_service_knowledge": ("发货", "物流", "退款", "退货", "售后", "多久"),
+        }
+        expected = [
+            tool_name
+            for tool_name, keywords in terms.items()
+            if any(keyword in query for keyword in keywords)
+        ]
+        if rag_result.get("product_knowledge") and "get_product_knowledge" not in expected:
+            expected.append("get_product_knowledge")
+        if rag_result.get("customer_service_knowledge") and "search_customer_service_knowledge" not in expected:
+            expected.append("search_customer_service_knowledge")
+        return expected
+
+    def _update_analysis_panel(
+        self,
+        query: str,
+        rag_result: Dict[str, Any],
+        agent_result: Optional[Dict[str, Any]] = None,
+    ):
+        products = rag_result.get("product_knowledge", [])
+        cs_list = rag_result.get("customer_service_knowledge", [])
+        expected_tools = self._infer_expected_tools(query, rag_result)
+        trace = (agent_result or {}).get("trace", {}) or {}
+        actual_tools = trace.get("tool_calls", []) or []
+        elapsed_ms = (agent_result or {}).get("elapsed_ms")
+        llm_calls = trace.get("llm_calls", 0)
+        fallback = bool(trace.get("fallback"))
+        reply_text = (agent_result or {}).get("reply", "")
+        estimated_tokens = self._estimate_tokens(query, reply_text, rag_result)
+
+        tool_line = "、".join(actual_tools) if actual_tools else "本次未触发真实工具调用"
+        expected_line = "、".join(expected_tools) if expected_tools else "未识别到明显工具意图"
+        elapsed_line = f"{elapsed_ms} ms" if elapsed_ms is not None else "等待 Agent 回复"
+        fallback_line = "是" if fallback else "否"
+        token_line = f"约 {estimated_tokens} tokens" if estimated_tokens else "等待 Agent 回复"
+
+        if actual_tools:
+            conclusion = "这次演示可以重点讲 Agent 如何根据意图选择工具，并把工具结果再交给模型组织回复。"
+        elif products or cs_list:
+            conclusion = "这次演示可以重点讲 RAG：先从知识库取依据，再让模型生成自然客服话术。"
+        else:
+            conclusion = "这次演示可以重点讲兜底策略：知识缺失时不强行编造，而是提示补充信息或转人工。"
+
+        self.flow_view.setPlainText(
+            "回答分析面板\n"
+            "------------------------------\n"
+            f"RAG 命中：商品知识 {len(products)} 条，客服知识 {len(cs_list)} 条\n"
+            f"真实工具调用：{tool_line}\n"
+            f"可讲解工具意图：{expected_line}\n"
+            f"LLM 调用次数：{llm_calls}\n"
+            f"端到端耗时：{elapsed_line}\n"
+            f"Token 粗估：{token_line}\n"
+            f"是否兜底：{fallback_line}\n"
+            f"面试讲解点：{conclusion}"
+        )
+
+    def _estimate_tokens(self, query: str, reply: str, rag_result: Dict[str, Any]) -> int:
+        """粗略估算本次演示涉及的 token 数，用于展示成本意识。"""
+        if not reply:
+            return 0
+
+        knowledge_text = self._format_rag_result(rag_result)
+        combined = f"{query}\n{reply}\n{knowledge_text}"
+        chinese_chars = sum(1 for ch in combined if "\u4e00" <= ch <= "\u9fff")
+        other_chars = max(len(combined) - chinese_chars, 0)
+        return int(chinese_chars * 1.1 + other_chars / 4)
 
     def _preview_retrieval_only(self):
         query = self.input_edit.toPlainText().strip()
@@ -485,6 +571,7 @@ class LocalTestUI(QFrame):
 
         result = self._search_knowledge(query, account)
         self._update_rag_panel(query, result)
+        self._update_analysis_panel(query, result)
         self.status_label.setText("已更新 RAG 检索结果")
 
     def _send_question(self):
@@ -504,7 +591,10 @@ class LocalTestUI(QFrame):
             return
 
         result = self._search_knowledge(query, account)
+        self.latest_query = query
+        self.latest_rag_result = result
         self._update_rag_panel(query, result)
+        self._update_analysis_panel(query, result)
         self._append_message("用户", query)
         self.input_edit.clear()
         self.status_label.setText("Agent 正在思考中...")
@@ -517,9 +607,14 @@ class LocalTestUI(QFrame):
         self.worker.finished.connect(self._on_worker_finished)
         self.worker.start()
 
-    def _on_reply_ready(self, reply: str):
-        self._append_message("Agent", reply or "抱歉，我暂时无法回复。")
-        self.status_label.setText("回复完成")
+    def _on_reply_ready(self, result: Dict[str, Any]):
+        reply = result.get("reply") or "抱歉，我暂时无法回复。"
+        self._append_message("Agent", reply)
+        query = getattr(self, "latest_query", "")
+        rag_result = getattr(self, "latest_rag_result", {})
+        self._update_analysis_panel(query, rag_result, result)
+        elapsed_ms = result.get("elapsed_ms")
+        self.status_label.setText(f"回复完成，用时 {elapsed_ms} ms" if elapsed_ms else "回复完成")
 
     def _on_reply_error(self, error: str):
         self._append_message("Agent", f"本地测试失败：{error}")

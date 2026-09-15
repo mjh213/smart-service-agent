@@ -1,10 +1,10 @@
 import sys
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QApplication, QFrame, QHBoxLayout, QLabel
-from PyQt6.QtGui import QFont, QIcon, QPixmap
-from qfluentwidgets import FluentWindow,qrouter, NavigationItemPosition
+from PyQt6.QtGui import QFont, QIcon
+from qfluentwidgets import FluentWindow, NavigationItemPosition
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import SubtitleLabel, TeachingTip, TeachingTipTailPosition
+from qfluentwidgets import SubtitleLabel
 from qfluentwidgets import Action
 from utils.logger_loguru import get_logger
 import time
@@ -112,15 +112,6 @@ class MainWindow(FluentWindow):
         self.addSubInterface(self.keyword_manager_view, FIF.EDIT, '关键词管理')
         self.addSubInterface(self.user_manager_view, FIF.PEOPLE, '账号管理')
         self.addSubInterface(self.knowledge_view, FIF.DOCUMENT, '知识库')
-        # 添加二维码按钮
-        self.navigationInterface.addItem(
-            routeKey='contact_us',
-            icon=FIF.QRCODE,
-            text='联系我们',
-            onClick=self.showQRCode,
-            selectable=False,
-            position=NavigationItemPosition.BOTTOM
-        )
         self.addSubInterface(self.log_view, FIF.HISTORY, '日志管理', NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.settingInterface, FIF.SETTING, '设置', NavigationItemPosition.BOTTOM)
 
@@ -138,28 +129,6 @@ class MainWindow(FluentWindow):
         
         # 最后最大化显示
         self.showMaximized()
-
-
-    def showQRCode(self):
-        """显示二维码TeachingTip"""
-        try:
-            tip = TeachingTip.create(
-                target=self.navigationInterface,
-                image="icon/Customer-Agent-qr.png",
-                icon=FIF.PEOPLE,
-                title="联系我们",
-                content="扫码关注获取更多信息和支持",
-                isClosable=True,
-                duration=-1,
-                tailPosition=TeachingTipTailPosition.LEFT,
-                parent=self
-            )
-            
-            # 显示TeachingTip
-            tip.show()
-            
-        except Exception as e:
-            self.logger.error(f"显示二维码失败: {e}")
 
     def closeEvent(self, a0):
         """ 重写窗口关闭事件，确保后台线程安全退出 """

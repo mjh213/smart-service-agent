@@ -2,7 +2,7 @@
 产品知识自动同步服务
 =================
 
-从拼多多API拉取商品列表，调用多模态LLM分析提取产品知识存入知识库。
+从电商平台API拉取商品列表，调用多模态LLM分析提取产品知识存入知识库。
 """
 import asyncio
 import threading
@@ -81,9 +81,9 @@ class ProductSyncService:
         第二阶段：批量异步识别每个商品的详细信息
 
         Args:
-            shop_id: 店铺ID（拼多多的shop_id）
+            shop_id: 店铺ID（电商平台的shop_id）
             shop_db_id: 店铺在数据库中的ID
-            user_id: 用户ID（用于拼多多API认证）
+            user_id: 用户ID（用于电商平台API认证）
             is_full_sync: True=全量同步，False=增量同步（仅同步本地不存在的商品）
             progress_callback: 进度回调，每次更新进度调用
 

@@ -3,21 +3,21 @@ from typing import Dict, List
 
 
 def get_pdd_connection_status() -> List:
-    """获取所有拼多多连接状态 - 全局便捷函数"""
+    """获取所有电商平台连接状态 - 全局便捷函数"""
     from core.di_container import container
     sm = container.get(ConnectionStatusManager)
     return sm.get_all_status()
 
 
 def get_pdd_connected_count() -> int:
-    """获取当前拼多多连接数 - 全局便捷函数"""
+    """获取当前电商平台连接数 - 全局便捷函数"""
     from core.di_container import container
     sm = container.get(ConnectionStatusManager)
     return sm.get_connected_count()
 
 
 def get_pdd_connection_summary() -> Dict[str, int]:
-    """获取拼多多连接状态汇总 - 全局便捷函数"""
+    """获取电商平台连接状态汇总 - 全局便捷函数"""
     from core.di_container import container
     sm = container.get(ConnectionStatusManager)
     all_status = sm.get_all_status()
@@ -38,7 +38,7 @@ def get_pdd_connection_summary() -> Dict[str, int]:
 
 def get_pdd_heartbeat_status_all() -> Dict[str, Dict]:
     """
-    获取所有拼多多连接的状态信息 - 全局便捷函数
+    获取所有电商平台连接的状态信息 - 全局便捷函数
     """
     from core.di_container import container
     sm = container.get(ConnectionStatusManager)

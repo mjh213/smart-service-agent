@@ -336,7 +336,7 @@ def configure_standard_services(config_instance: Any = None) -> 'DIContainer':
     按依赖顺序注册核心标准服务到 DI 容器
 
     目前仅注册需要 DI 统一管理的服务：
-    1. ConnectionStatusManager — 连接状态管理（跨 PDDChannel 实例共享）
+    1. ConnectionStatusManager — 连接状态管理（跨 PlatformChannel 实例共享）
     2. DatabaseManager — 数据库管理器
 
     其他服务（QueueManager、MessageConsumerManager、CacheManager）

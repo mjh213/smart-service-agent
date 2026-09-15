@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-PyInstaller spec for Agent-Customer
-生成命令: pyinstaller scripts/agent_customer.spec
+PyInstaller spec for SmartService
+生成命令: pyinstaller scripts/smartservice.spec
 """
 
 import sys
@@ -228,7 +228,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="AgentCustomer",
+    name="SmartService",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -243,7 +243,7 @@ exe = EXE(
     # Windows 特定
     version="",
     description="电商AI客服助手",
-    product_name="Agent-Customer",
+    product_name="SmartService",
     product_version="0.1.0",
     company_name="",
     legal_copyright="",
@@ -266,5 +266,5 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="AgentCustomer",
+    name="SmartService",
 )

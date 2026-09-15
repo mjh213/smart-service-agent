@@ -1,4 +1,4 @@
-# Agent-Customer 构建脚本使用指南
+# SmartService 构建脚本使用指南
 
 本文档介绍 `scripts/` 目录下各个构建和使用脚本的详细功能和使用方法。
 
@@ -72,7 +72,7 @@ python scripts/build_exe.py --clean --installer
 ```
 
 **输出文件：**
-- `dist/AgentCustomer.exe` - 主程序
+- `dist/SmartService.exe` - 主程序
 - `dist/temp/` - 临时文件目录
 - `dist/README.txt` - 用户说明
 - `dist/run.bat` - Windows 批处理启动脚本
@@ -86,7 +86,7 @@ python scripts/build_exe.py --clean --installer
   - `app.py`
   - `config.json`
   - `icon/icon.ico`
-  - `scripts/agent_customer.spec` (当前不存在，需要创建)
+  - `scripts/smartservice.spec`
   - `requirements.txt`
 
 ---
@@ -112,7 +112,7 @@ python scripts/build_win_exe.py --python 3.11
 ```
 
 **输出文件：**
-- `dist/AgentCustomer.exe` - 可执行文件
+- `dist/SmartService.exe` - 可执行文件
 
 **前置要求：**
 - 安装 `uv` 包管理器
@@ -158,11 +158,11 @@ python scripts/install_playwright.py
 Windows 可执行文件的版本信息配置文件，用于 PyInstaller 打包。
 
 **包含信息：**
-- 公司名称：Agent-Customer
+- 公司名称：SmartService Team
 - 文件描述：电商AI客服助手
 - 版本号：0.1.0.0
-- 版权信息：Copyright (C) 2025 Agent-Customer Team
-- 产品名称：Agent-Customer
+- 版权信息：Copyright (C) 2026 SmartService Team
+- 产品名称：SmartService
 
 **修改方法：**
 如需修改版本信息，请编辑相应字段：
@@ -208,7 +208,7 @@ python scripts/build_exe.py --mode debug --clean
 
 ### 依赖问题
 - 确保所有必要的文件都存在于项目根目录
-- `agent_customer.spec` 文件当前不存在，需要先创建
+- `smartservice.spec` 是 PyInstaller 配置文件
 - 网络连接问题可能影响 Playwright 浏览器下载
 
 ### 构建问题
@@ -236,11 +236,11 @@ python scripts/build_exe.py --mode debug --clean
 pip install uv
 ```
 
-**2. 找不到 agent_customer.spec 文件**
+**2. 找不到 smartservice.spec 文件**
 ```bash
 # 需要先创建 PyInstaller spec 文件
 # 可以使用以下命令生成模板：
-pyi-makespec app.py --onefile --windowed --name AgentCustomer
+pyi-makespec app.py --onefile --windowed --name SmartService
 ```
 
 **3. Playwright 浏览器安装失败**
@@ -268,7 +268,7 @@ python scripts/build_exe.py --mode debug
 
 ## 📝 开发者信息
 
-- **项目名称：** Agent-Customer
+- **项目名称：** SmartService
 - **版本：** 0.1.0
 - **描述：** 电商AI客服助手
 - **主要技术栈：** Python, PyQt6, Playwright, OpenAI, LanceDB

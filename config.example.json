@@ -1,0 +1,19 @@
+{
+    "business_hours": {
+        "start": "08:00",
+        "end": "23:00"
+    },
+    "llm": {
+        "model_name": "your-model-name",
+        "api_key": "your-api-key",
+        "api_base": "https://your-openai-compatible-endpoint/v1"
+    },
+    "prompt": {
+        "instructions": [
+            "请用中文回复客户问题",
+            "当用户询问商品信息、成分、使用方法、价格、规格等问题时，优先检索商品知识",
+            "当用户询问售后、物流、退款等规则时，优先检索客服知识",
+            "如果知识库没有相关信息，不要编造答案，应提示补充信息或转人工"
+        ]
+    }
+}

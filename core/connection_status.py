@@ -1,8 +1,8 @@
 """
 连接状态管理 - 独立模块
 
-职责：维护所有 PDDChannel 实例的连接状态。
-从 Channel/pinduoduo/pdd_channel.py 中提取出来，
+职责：维护所有 PlatformChannel 实例的连接状态。
+从 Channel/platform/channel.py 中提取出来，
 明确其跨实例共享状态的职责边界。
 """
 
@@ -43,7 +43,7 @@ class ConnectionStatusManager:
     职责边界：
     - 仅负责存储和查询连接状态
     - 不负责创建/销毁连接
-    - 不持有任何 PDDChannel 实例引用
+    - 不持有任何 PlatformChannel 实例引用
     - 线程安全（使用 RLock）
 
     单例管理：通过 DI 容器注册为单例（推荐方式）。

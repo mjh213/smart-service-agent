@@ -421,21 +421,29 @@ class KnowledgeService:
                     CustomerServiceKnowledge.enabled == True,
                 ]
 
-                # 对每个关键词添加 LIKE 条件
-                for word in words:
-                    if len(word.strip()) >= 2:  # 太短的词忽略
-                        product_conditions.append(
+                # 采用“任一有效词命中”而不是“所有词都必须命中”。
+                # 例如“多久发货”中，“多久”通常不会原样出现在政策文本中，
+                # 但“发货”可以准确命中“发货时效说明”。
+                valid_words = [word.strip() for word in words if len(word.strip()) >= 2]
+                if valid_words:
+                    product_keyword_conditions = []
+                    cs_keyword_conditions = []
+                    for word in valid_words:
+                        product_keyword_conditions.append(
                             or_(
                                 ProductKnowledge.goods_name.contains(word),
                                 ProductKnowledge.extracted_content.contains(word),
                             )
                         )
-                        cs_conditions.append(
+                        cs_keyword_conditions.append(
                             or_(
                                 CustomerServiceKnowledge.title.contains(word),
                                 CustomerServiceKnowledge.content.contains(word),
                             )
                         )
+
+                    product_conditions.append(or_(*product_keyword_conditions))
+                    cs_conditions.append(or_(*cs_keyword_conditions))
 
                 # 查询产品知识
                 stmt_p = select(ProductKnowledge).where(and_(*product_conditions))\
@@ -457,7 +465,7 @@ class KnowledgeService:
 
                 stmt_cs = select(CustomerServiceKnowledge).where(
                     and_(
-                        CustomerServiceKnowledge.shop_id == shop_id,
+                        CustomerServiceKnowledge.shop_id == db_shop_id,
                         CustomerServiceKnowledge.enabled == True,
                     )
                 ).order_by(CustomerServiceKnowledge.created_at.desc())\

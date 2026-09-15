@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Agent-Customer 打包脚本
+SmartService 打包脚本
 使用 PyInstaller 将项目打包成独立的可执行文件
 支持 Windows 平台
 """
@@ -55,7 +55,7 @@ def create_temp_directory(dist_path):
 def build_executable(mode="release"):
     """构建可执行文件"""
     # 检查 spec 文件是否存在
-    spec_file = Path("scripts/agent_customer.spec")
+    spec_file = Path("scripts/smartservice.spec")
     if not spec_file.exists():
         raise FileNotFoundError(f"找不到 spec 文件: {spec_file}")
 
@@ -92,8 +92,8 @@ def build_executable(mode="release"):
 
     # 检查构建结果
     dist_path = Path("dist")
-    app_dir = dist_path / "AgentCustomer"
-    exe_path = app_dir / "AgentCustomer.exe"
+    app_dir = dist_path / "SmartService"
+    exe_path = app_dir / "SmartService.exe"
 
     if exe_path.exists():
         file_size = exe_path.stat().st_size / (1024 * 1024)  # MB
@@ -116,10 +116,10 @@ def build_executable(mode="release"):
 def create_distribution_files(dist_path):
     """创建分发包需要的额外文件"""
     # 创建 README.txt
-    readme_content = """Agent-Customer 电商AI客服助手
+    readme_content = """SmartService 智能客服工作台
 
 运行说明：
-1. 双击 AgentCustomer.exe 启动程序
+1. 双击 SmartService.exe 启动程序
 2. 首次运行会自动创建 temp 目录用于存储数据库
 3. 配置文件 config.json 可根据需要修改
 
@@ -134,8 +134,8 @@ def create_distribution_files(dist_path):
 - 请根据实际情况修改相关配置
 
 技术支持：
-- 项目地址: https://github.com/your-repo/Agent-Customer
-- 问题反馈: 请通过 GitHub Issues 提交
+- 项目地址：请填写你的项目地址
+- 问题反馈：请通过项目仓库的 Issues 提交
 """
 
     (dist_path / "README.txt").write_text(readme_content, encoding="utf-8")
@@ -143,10 +143,10 @@ def create_distribution_files(dist_path):
     # 创建运行脚本
     if platform.system() == "Windows":
         bat_content = """@echo off
-title Agent-Customer 电商AI客服助手
-echo 启动 Agent-Customer...
+title SmartService 智能客服工作台
+echo 启动 SmartService...
 echo.
-AgentCustomer.exe
+SmartService.exe
 if errorlevel 1 (
     echo.
     echo 程序异常退出，请检查配置文件或联系技术支持
@@ -165,14 +165,14 @@ pause
 def create_installer_script(dist_path):
     """创建 NSIS 安装包脚本"""
     nsis_script = f"""
-; Agent-Customer 安装包脚本
+; SmartService 安装包脚本
 ; 需要 NSIS (https://nsis.sourceforge.io/)
 
-!define APP_NAME "Agent-Customer"
+!define APP_NAME "SmartService"
 !define APP_VERSION "0.1.0"
-!define APP_PUBLISHER "Agent-Customer Team"
-!define APP_URL "https://github.com/your-repo/Agent-Customer"
-!define APP_EXE "AgentCustomer.exe"
+!define APP_PUBLISHER "SmartService Team"
+!define APP_URL "https://example.com/smartservice"
+!define APP_EXE "SmartService.exe"
 
 ; 包含现代 UI
 !include "MUI2.nsh"
@@ -278,7 +278,7 @@ def check_dependencies():
         "app.py",
         "config.json",
         "icon/icon.ico",
-        "scripts/agent_customer.spec",
+        "scripts/smartservice.spec",
         "pyproject.toml",
     ]
 
@@ -309,7 +309,7 @@ def main():
             pass
 
     parser = argparse.ArgumentParser(
-        description="构建 Agent-Customer 发布包",
+        description="构建 SmartService 发布包",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例用法:
@@ -354,7 +354,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 60)
-    print("Agent-Customer 打包工具")
+    print("SmartService 打包工具")
     print("=" * 60)
 
     try:
@@ -396,8 +396,8 @@ def main():
             print(f"安装包脚本: {Path('installer.nsi').absolute()}")
 
         print("\n运行说明：")
-        print("1. 进入 dist/AgentCustomer 目录")
-        print("2. 双击 AgentCustomer.exe 或运行 run.bat")
+        print("1. 进入 dist/SmartService 目录")
+        print("2. 双击 SmartService.exe 或运行 run.bat")
 
     except KeyboardInterrupt:
         print("\n\n构建被用户中断")

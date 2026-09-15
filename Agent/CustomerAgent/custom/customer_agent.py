@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import Any, Dict, List, Optional
 
 from Agent.bot import Bot
@@ -96,6 +97,7 @@ class CustomerAgent(Bot):
         self._tool_executor: Optional[ToolExecutor] = None
         self._session_manager: Optional[SessionManager] = None
         self._tools: List[Dict[str, Any]] = []
+        self.last_trace: Dict[str, Any] = {}
 
         logger.info("CustomerAgent 实例创建成功")
 
@@ -154,9 +156,20 @@ class CustomerAgent(Bot):
 
     async def async_reply(self, query: str, context: Context = None) -> Reply:
         """异步回复接口"""
+        self.last_trace = {
+            "query": query,
+            "session_id": "",
+            "llm_calls": 0,
+            "tool_calls": [],
+            "fallback": False,
+            "error": "",
+        }
+
         # 延迟初始化
         if not self._is_initialized:
             if not await self.initialize_async():
+                self.last_trace["fallback"] = True
+                self.last_trace["error"] = "agent initialization failed"
                 return Reply(ReplyType.TEXT, "AI客服初始化失败，请检查配置。")
 
         try:
@@ -168,6 +181,14 @@ class CustomerAgent(Bot):
                 # 降级：使用 query hash 作为 session_id
                 session_id = f"fallback_{abs(hash(query)) % 100000}"
                 dependencies = {}
+            self.last_trace["session_id"] = session_id
+
+            # 保存当前用户消息，避免历史中只剩 assistant 回复，导致模型反复沿用旧政策答案。
+            self._session_manager.add_message(
+                session_id=session_id,
+                role="user",
+                content=query,
+            )
 
             # 加载历史并检查压缩
             history = self._session_manager.get_history(session_id)
@@ -181,6 +202,15 @@ class CustomerAgent(Bot):
             # 执行 Agent 循环
             final_content = await self._run_agent_loop(messages, dependencies)
 
+            # 对高风险、强结构化的发货时效做确定性校验。
+            # 大模型可能受历史会话影响复述旧数字，因此具体小时数必须以当前
+            # 知识库快照为准，不能只依赖 Prompt 约束。
+            final_content = self._apply_delivery_policy_guard(
+                query=query,
+                content=final_content,
+                dependencies=dependencies,
+            )
+
             # 保存最终回复到历史
             self._session_manager.add_message(
                 session_id=session_id,
@@ -192,7 +222,44 @@ class CustomerAgent(Bot):
 
         except Exception as e:
             logger.error(f"CustomerAgent 回复失败: {e}")
+            self.last_trace["fallback"] = True
+            self.last_trace["error"] = str(e)
             return Reply(ReplyType.TEXT, "抱歉，我现在无法回复，请稍后再试。")
+
+    def _apply_delivery_policy_guard(
+        self,
+        query: str,
+        content: str,
+        dependencies: Dict[str, Any],
+    ) -> str:
+        """确保发货时效回答不会使用历史或模型臆测的旧数字。"""
+        delivery_terms = ("发货", "发出", "物流", "多久")
+        if not query or not any(term in query for term in delivery_terms):
+            return content
+
+        knowledge_context = str(dependencies.get("knowledge_context", ""))
+        if "发货时效" not in knowledge_context:
+            return content
+
+        match = re.search(r"(\d+)\s*小时", knowledge_context)
+        if not match:
+            # 知识库没有明确时效时，禁止保留模型自行生成的具体小时数。
+            if content and re.search(r"\d+\s*小时", content):
+                return "亲～当前知识库没有查到明确的发货时效，建议联系人工客服确认哦～📦"
+            return content
+
+        hours = match.group(1)
+        # 只要模型没有使用当前知识库的具体时效，统一返回基于当前政策的短答。
+        # 这样知识库修改为 24/48/72 小时后，答案会随知识库自动变化。
+        content_hours = re.findall(r"(\d+)\s*小时", content or "")
+        if not content or hours not in content_hours or any(value != hours for value in content_hours):
+            policy_text = knowledge_context.split("发货时效说明", 1)[-1]
+            policy_text = policy_text.split("【", 1)[0].strip()
+            policy_text = re.sub(r"^\s*\d+\.\s*", "", policy_text)
+            policy_text = policy_text.rstrip("。.!！?？ ")
+            return f"亲～{policy_text}哦～📦"
+
+        return content
 
     async def _run_agent_loop(
         self,
@@ -210,8 +277,11 @@ class CustomerAgent(Bot):
             # 1. 调用 LLM
             try:
                 response = await self._llm_client.chat(messages, tool_choice="auto")
+                self.last_trace["llm_calls"] = self.last_trace.get("llm_calls", 0) + 1
             except Exception as e:
                 logger.error(f"LLM 调用失败: {e}")
+                self.last_trace["fallback"] = True
+                self.last_trace["error"] = str(e)
                 if loop_count == 0:
                     return f"抱歉，AI 服务暂时不可用：{e}"
                 # 已有中间结果，返回已生成的内容
@@ -244,6 +314,9 @@ class CustomerAgent(Bot):
                 ],
             }
             messages.append(assistant_msg)
+            self.last_trace.setdefault("tool_calls", []).extend(
+                tc.function.name for tc in response.tool_calls
+            )
 
             # 4. 检查循环上限
             if loop_count >= self._config.max_loops - 1:
@@ -254,8 +327,10 @@ class CustomerAgent(Bot):
                 })
                 try:
                     final_response = await self._llm_client.chat(messages)
+                    self.last_trace["llm_calls"] = self.last_trace.get("llm_calls", 0) + 1
                     return final_response.content or assistant_msg["content"]
                 except Exception:
+                    self.last_trace["fallback"] = True
                     return assistant_msg["content"]
 
             # 5. 并行执行所有工具调用

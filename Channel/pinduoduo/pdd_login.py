@@ -1,5 +1,5 @@
 """
-拼多多账号异步登录认证
+电商平台账号异步登录认证
 """
 import os
 # 必须在导入 playwright 之前设置浏览器路径
@@ -87,8 +87,8 @@ class PDDLogin():
             # 点击登录按钮
             await page.click("button:has-text('登录')")
             
-            # 等待页面 title等于 拼多多 商家后台，首页或者订单查询
-            await page.wait_for_function("() => document.title === '拼多多 商家后台' || document.title === '首页' || document.title === '订单查询'", timeout=30000)
+            # 等待页面 title等于 电商平台 商家后台，首页或者订单查询
+            await page.wait_for_function("() => document.title === '电商平台 商家后台' || document.title === '首页' || document.title === '订单查询'", timeout=30000)
             
             # 获取cookies并转换为字典格式
             cookies_list = await context.cookies()
@@ -143,7 +143,7 @@ class PDDLogin():
 
             page = await context.new_page()
 
-            # 访问拼多多商家后台首页，验证登录状态
+            # 访问电商平台商家后台首页，验证登录状态
             await page.goto("https://mms.pinduoduo.com/home/")
 
             # 等待页面加载，检查是否需要重新登录
@@ -240,7 +240,7 @@ async def login_pdd(name, password, headless=False):
 
 async def refresh_pdd_cookies(name, password=None):
     """
-    刷新拼多多账号的cookies，使用已保存的用户数据，无需再次输入账号密码。
+    刷新电商平台账号的cookies，使用已保存的用户数据，无需再次输入账号密码。
     如果刷新成功，返回包含最新cookies的字典。
     如果刷新失败（如登录状态已失效），返回 False。
 

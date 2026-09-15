@@ -124,7 +124,7 @@ class BaseRequest:
         if not response_data:
             return False
             
-        # 检测拼多多会话过期的特征
+        # 检测电商平台会话过期的特征
         if (response_data.get('error_code') == self.SESSION_EXPIRED_ERROR_CODE and 
             '会话已过期' in str(response_data.get('error_msg', ''))):
             self.logger.warning(f"检测到账号 {self.account_name} 会话过期")

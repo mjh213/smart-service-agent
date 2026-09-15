@@ -29,13 +29,13 @@ StringFileInfo(
   [
   StringTable(
     u'080404B0',
-    [StringStruct(u'CompanyName', u'Agent-Customer'),
+    [StringStruct(u'CompanyName', u'SmartService Team'),
     StringStruct(u'FileDescription', u'电商AI客服助手'),
     StringStruct(u'FileVersion', u'1.0.1'),
-    StringStruct(u'InternalName', u'AgentCustomer'),
-    StringStruct(u'LegalCopyright', u'Copyright (C) 2025 Agent-Customer Team'),
-    StringStruct(u'OriginalFilename', u'AgentCustomer.exe'),
-    StringStruct(u'ProductName', u'Agent-Customer'),
+    StringStruct(u'InternalName', u'SmartService'),
+    StringStruct(u'LegalCopyright', u'Copyright (C) 2026 SmartService Team'),
+    StringStruct(u'OriginalFilename', u'SmartService.exe'),
+    StringStruct(u'ProductName', u'SmartService'),
     StringStruct(u'ProductVersion', u'1.0.1')])
   ]),
 VarFileInfo([VarStruct(u'Translation', [2052, 1200])])

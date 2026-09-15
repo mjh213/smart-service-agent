@@ -116,8 +116,10 @@ class LLMClient:
             logger.debug(f"消息 {i} [{role}]: 长度={len(content)}")
 
         # 4. 调用 API
+        # 只发送业务代码显式设置的参数，避免把兼容模型中的默认字段
+        # （如 logprobs/top_logprobs/reasoning_effort 等）带给不同厂商导致 400。
         response = await self._client.chat.completions.create(
-            **validated_request.model_dump(exclude_none=True)
+            **validated_request.model_dump(exclude_none=True, exclude_unset=True)
         )
         message = response.choices[0].message
 

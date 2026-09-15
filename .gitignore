@@ -8,6 +8,7 @@ __pycache__
 *.exe
 *.spec
 !scripts/*.spec
+*.docx
 browser_data/*
 *.log
 examples/
@@ -15,10 +16,13 @@ logs/
 dist
 build
 .venv
+.uv-cache
 user_data/
 *.db
 *.db
 config.json
+*.env
+.env
 temp/
 .claude/
 
@@ -36,6 +40,8 @@ tmp/
 *.tmp
 *.temp
 test/
+test00.py
+scripts/create_interview_project_doc.py
 # IDE and editor files
 .vscode/
 .idea/

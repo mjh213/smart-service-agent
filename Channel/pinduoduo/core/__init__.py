@@ -1,4 +1,4 @@
-# 拼多多渠道核心模块
+# 电商平台渠道核心模块
 from .pdd_config import ReconnectConfig, HeartbeatConfig
 from .pdd_connection import ConnectionMixin
 from .pdd_message_handler import MessageHandlerMixin

@@ -162,7 +162,7 @@ class MessageHandlerMixin:
             self.logger.error(f"立即处理消息失败: {e}")
 
     def _convert_to_context(self, pdd_message: PDDChatMessage, shop_id: str, user_id: str, username: str) -> Context:
-        """将拼多多消息转换为Context格式"""
+        """将电商平台消息转换为Context格式"""
         shop_info = db_manager.get_shop(self.channel_name, shop_id)
         shop_name = shop_info.get("shop_name", "")
 
@@ -176,7 +176,7 @@ class MessageHandlerMixin:
         else:
             content = str(content)
 
-        context = Context.create_pinduoduo_context(
+        context = Context.create_platform_context(
             content=content,
             msg_id=str(pdd_message.msg_id) if pdd_message.msg_id is not None else "",
             from_user=str(pdd_message.from_user) if pdd_message.from_user is not None else "",
@@ -191,7 +191,7 @@ class MessageHandlerMixin:
             username=str(username),
             shop_name=str(shop_name),
             raw_data=pdd_message.raw_data,
-            channel_type=ChannelType.PINDUODUO
+            channel_type=ChannelType.PLATFORM
         )
         return context
 

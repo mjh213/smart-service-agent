@@ -41,7 +41,7 @@ def check_cookies_valid(
     """
     通过轻量级 HTTP 请求验证 cookie 是否有效。
 
-    向拼多多 getToken 端点发送 POST 请求，检查响应中是否包含
+    向电商平台 getToken 端点发送 POST 请求，检查响应中是否包含
     error_code=43001（会话已过期）。
 
     Args:

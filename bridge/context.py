@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 class ChannelType(str, Enum):
     """渠道类型枚举"""
-    PINDUODUO = "pinduoduo"
+    PLATFORM = "platform"
     JINGDONG = "jingdong"
     TAOBAO = "taobao"
     DOUYIN = "douyin"
@@ -38,8 +38,8 @@ class ContextType(str, Enum):
     def __str__(self):
         return self.value
 
-class PinduoduoKwargs(BaseModel):
-    """拼多多消息专用kwargs类型定义"""
+class PlatformKwargs(BaseModel):
+    """电商平台消息专用kwargs类型定义"""
     msg_id: Optional[str] = None
     shop_name: Optional[str] = None
     from_user: Optional[str] = None
@@ -65,12 +65,12 @@ class Context(BaseModel):
     channel_type: Optional[ChannelType] = Field(None, description="渠道类型")
 
     @classmethod
-    def create_pinduoduo_context(cls, content=None, msg_id=None, from_user=None, from_uid=None,
+    def create_platform_context(cls, content=None, msg_id=None, from_user=None, from_uid=None,
                                 to_user=None, to_uid=None, nickname=None, timestamp=None,
                                 user_msg_type=None, shop_id=None, user_id=None, username=None, shop_name=None,
                                 raw_data=None,channel_type= None):
-        """创建拼多多上下文实例的便捷方法"""
-        kwargs = PinduoduoKwargs(
+        """创建电商平台上下文实例的便捷方法"""
+        kwargs = PlatformKwargs(
             msg_id=msg_id,
             from_user=from_user,
             from_uid=from_uid,
@@ -92,4 +92,3 @@ class Context(BaseModel):
             kwargs=kwargs,
             channel_type=channel_type
         )
-

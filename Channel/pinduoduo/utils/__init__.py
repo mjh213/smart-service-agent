@@ -1,5 +1,5 @@
 """
-拼多多API模块
+电商平台API模块
 统一管理所有API请求类
 """
 
@@ -21,5 +21,5 @@ __all__ = [
 
 # 版本信息
 __version__ = '1.0.0'
-__author__ = 'Agent-Customer Team'
-__description__ = '拼多多API统一请求基类和相关API实现' 
+__author__ = 'SmartService Team'
+__description__ = '电商平台API统一请求基类和相关API实现' 

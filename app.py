@@ -16,7 +16,7 @@
 - DI 容器通过 configure_standard_services() 统一管理所有服务的生命周期
 - UI 模块在 main() 中通过延迟加载初始化
 - 业务模块间通过延迟导入（lazy import）避免循环依赖
-- PDDChannel 每个 AutoReplyThread 独立实例，共享 ConnectionStatusManager
+- 渠道连接实例之间共享 ConnectionStatusManager
 """
 import sys
 import ctypes
@@ -70,7 +70,7 @@ def main():
 
     # 创建应用
     app = QApplication(sys.argv)
-    app.setApplicationName("Agent-Customer")
+    app.setApplicationName("SmartService")
     apply_global_theme(app)
 
     # 创建主窗口
